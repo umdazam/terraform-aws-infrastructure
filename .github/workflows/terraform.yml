@@ -1,0 +1,106 @@
+
+name: Terraform CI - Plan
+
+on:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - 'infra/**'
+      - '.github/workflows/terraform.yml'
+
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  terraform-fmt:
+    name: Terraform Format
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.10.5
+
+      - name: Terraform Format Check
+        run: terraform fmt -check -recursive infra/
+
+  terraform-plan:
+    name: Terraform Plan - ${{ matrix.environment }}
+    runs-on: ubuntu-latest
+    needs: terraform-fmt
+
+    strategy:
+      fail-fast: false
+      matrix:
+        environment:
+          - dev
+          - prod
+
+    defaults:
+      run:
+        working-directory: infra/envs/${{ matrix.environment }}
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.10.5
+
+      # AWS authentication using GitHub OIDC
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          aws-region: ap-south-2
+
+      # Terraform initialization
+      - name: Terraform Init
+        run: terraform init -input=false -backend-config=backend.hcl
+
+      # Terraform validation
+      - name: Terraform Validate
+        run: terraform validate
+
+      # Terraform plan
+      - name: Terraform Plan
+        run: |
+          set -o pipefail
+          terraform plan \
+            -input=false \
+            -no-color \
+            -var-file=terraform.tfvars \
+            | tee plan.txt
+
+      # Display plan in GitHub workflow summary
+      - name: Publish Plan Summary
+        if: always()
+        run: |
+          if [ -f plan.txt ]; then
+            {
+              echo "## Terraform Plan - ${{ matrix.environment }}"
+              echo '```terraform'
+              cat plan.txt
+              echo '```'
+            } >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+      # Upload plan as artifact
+      - name: Upload Terraform Plan
+        if: always() && hashFiles('infra/envs/${{ matrix.environment }}/plan.txt') != ''
+        uses: actions/upload-artifact@v4
+        with:
+          name: terraform-plan-${{ matrix.environment }}
+          path: infra/envs/${{ matrix.environment }}/plan.txt
+          retention-days: 5
+
