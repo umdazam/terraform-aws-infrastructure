@@ -95,17 +95,17 @@ resource "aws_security_group" "rds_sg" {
 module "rds" {
   source = "../modules/rds"
 
-  name                   = var.name
-  subnet_ids             = module.network.private_subnet_ids
-  security_group_id      = aws_security_group.rds_sg.id
-  instance_class         = var.db_instance_class
-  allocated_storage      = var.db_allocated_storage
-  max_allocated_storage  = var.db_max_allocated_storage
-  backup_retention       = var.db_backup_retention
-  deletion_protection    = var.db_deletion_protection
-  skip_final_snapshot    = var.db_skip_final_snapshot
-  db_name                = var.db_name
-  db_username            = var.db_username
+  name                  = var.name
+  subnet_ids            = module.network.private_subnet_ids
+  security_group_id     = aws_security_group.rds_sg.id
+  instance_class        = var.db_instance_class
+  allocated_storage     = var.db_allocated_storage
+  max_allocated_storage = var.db_max_allocated_storage
+  backup_retention      = var.db_backup_retention
+  deletion_protection   = var.db_deletion_protection
+  skip_final_snapshot   = var.db_skip_final_snapshot
+  db_name               = var.db_name
+  db_username           = var.db_username
 }
 
 # ECS MODULE
@@ -113,21 +113,21 @@ module "rds" {
 module "ecs" {
   source = "../modules/ecs"
 
-  name              = var.name
-  vpc_id            = module.network.vpc_id
-  public_subnets    = module.network.public_subnet_ids
-  private_subnets   = module.network.private_subnet_ids
+  name            = var.name
+  vpc_id          = module.network.vpc_id
+  public_subnets  = module.network.public_subnet_ids
+  private_subnets = module.network.private_subnet_ids
 
-  alb_sg_id         = aws_security_group.alb_sg.id
-  ecs_sg_id         = aws_security_group.ecs_sg.id
+  alb_sg_id = aws_security_group.alb_sg.id
+  ecs_sg_id = aws_security_group.ecs_sg.id
 
-  app_image         = var.app_image
-  container_port    = var.container_port
-  cpu               = var.ecs_cpu
-  memory            = var.ecs_memory
-  desired_count     = var.desired_count
+  app_image      = var.app_image
+  container_port = var.container_port
+  cpu            = var.ecs_cpu
+  memory         = var.ecs_memory
+  desired_count  = var.desired_count
 
-  db_endpoint       = module.rds.db_endpoint
-  db_name           = var.db_name
-  db_username       = var.db_username
+  db_endpoint = module.rds.db_endpoint
+  db_name     = var.db_name
+  db_username = var.db_username
 }

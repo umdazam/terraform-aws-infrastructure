@@ -5,8 +5,8 @@ provider "aws" {
 module "platform" {
   source = "../../platform"
 
-  name                 = var.name
-  vpc_cidr             = var.vpc_cidr
+  name     = var.name
+  vpc_cidr = var.vpc_cidr
 
   public_subnet_cidrs  = var.public_subnet_cidrs
   private_subnet_cidrs = var.private_subnet_cidrs
@@ -14,9 +14,9 @@ module "platform" {
   app_image      = var.app_image
   container_port = var.container_port
 
-  ecs_cpu        = var.ecs_cpu
-  ecs_memory     = var.ecs_memory
-  desired_count  = var.desired_count
+  ecs_cpu       = var.ecs_cpu
+  ecs_memory    = var.ecs_memory
+  desired_count = var.desired_count
 
   db_instance_class        = var.db_instance_class
   db_allocated_storage     = var.db_allocated_storage
