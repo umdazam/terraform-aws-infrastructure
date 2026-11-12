@@ -8,3 +8,6 @@ crash.*.log
 *.key
 *.swp
 .env
+
+# Database backup files
+backups/
